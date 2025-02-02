@@ -26,18 +26,14 @@ Pico WiFi Duck is a project that enables the emulation of a USB Rubber Ducky ove
 
 1. **Install CircuitPython:**
 
-   - Click [here](https://adafruit-circuit-python.s3.amazonaws.com/bin/raspberry_pi_pico_w/fr/adafruit-circuitpython-raspberry_pi_pico_w-fr-8.0.0.uf2) to download (Version 8.0.0).
+   -Download .uf2 file from this repo
    - Plug the device into a USB port while holding the boot button. It will show up as a removable media device named RPI-RP2.
    - Copy the downloaded (".uf2") file to the root of the Pico (RPI-RP2). The device will reboot and after a second or so, it will reconnect as CIRCUITPY.
 
 2. **Install Pico Wifi Duck Files on the Pico:**
-   - Download the release file from [here](https://github.com/majdsassi/Pico-WIFI-Duck/releases/download/Release_Stable/Release.zip).
-   - Unzip it.
-   
-    ![](https://gcdnb.pbrd.co/images/D8EojIfPHI9v.jpg?o=1)
+    -Download this repo as zip and copy the lib file to the root folder of your pico
    - While plugging in your Pico, copy and paste the files that you unzip onto the "CIRCUITPY" drive.
    
-     ![](https://gcdnb.pbrd.co/images/WuZOVmyUAWF4.jpg?o=1)
 
 ### Usage
 
@@ -54,4 +50,4 @@ Pico WiFi Duck is a project that enables the emulation of a USB Rubber Ducky ove
 4. Write your script in the textarea and click on "RUN" .
 
 ### Note
-Make sure you download the latest release.
+THİS İS NOT ORİGİNAL PİCO WIFI DUCK, ONLY TURKİSH LAYOUT AND CİRCUİTPY 9.2.3 VERSİON OF THE CODE 
