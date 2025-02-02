@@ -39,15 +39,16 @@ Pico WiFi Duck is a project that enables the emulation of a USB Rubber Ducky ove
 
 1. Connect your Raspberry Pi Pico W to the target system using a good-quality USB cable.
 
-2. Connect to the WiFi network created by the Pico; it's called **"Pico Wifi Duck"**, and its password is **"pico123456"**.
+2. Connect to the WiFi network created by the Pico; it's called **"Pico-ducky"**, and its password is **"12345678"**.
+3. You can change the name and the password of the wifi duck by changing code.py file
 
    ![WIFI CONNECTION](https://gcdnb.pbrd.co/images/Nm86ZhwCuXth.jpg?o=1)
 
-3. Open your browser and navigate to [192.168.4.1](http://192.168.4.1).
+4. Open your browser and navigate to [192.168.4.1](http://192.168.4.1).
 
    ![Webpage](https://gcdnb.pbrd.co/images/Qrj5szwW56B3.jpg?o=1)
 
-4. Write your script in the textarea and click on "RUN" .
+5. Write your script in the textarea and click on "RUN" .
 
 ### Note
 THİS İS NOT ORİGİNAL PİCO WIFI DUCK, ONLY TURKİSH LAYOUT AND CİRCUİTPY 9.2.3 VERSİON OF THE CODE 
