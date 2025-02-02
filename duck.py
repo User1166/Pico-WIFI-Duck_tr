@@ -1,12 +1,18 @@
 import usb_hid
 from adafruit_hid.keyboard import Keyboard
-from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
 from adafruit_hid.keycode import Keycode
 import time
-import digitalio
-from board import *
-def exe(Payload_Script):
-    duckyCommands = {
+
+# Türkçe Klavye Düzeni ve Tuş Kodları
+try:
+    from keyboard_layout_win_tr import KeyboardLayout  # Türkçe klavye düzeni
+    from keycode_win_tr import Keycode  # Türkçe Keycode'ları keycode_win_tr dosyasından import et
+    print("Türkçe Klavye Düzeni ve Tuş Kodları başarıyla yüklendi!")
+except ImportError as e:
+    print(f"Hata: {e}. Türkçe Klavye düzeni veya tuş kodları yüklenemedi.")
+
+# Anahtar kelimeleri tanımla
+duckyCommands = {
     'WINDOWS': Keycode.WINDOWS, 'GUI': Keycode.GUI,
     'APP': Keycode.APPLICATION, 'MENU': Keycode.APPLICATION, 'SHIFT': Keycode.SHIFT,
     'ALT': Keycode.ALT, 'CONTROL': Keycode.CONTROL, 'CTRL': Keycode.CONTROL,
@@ -26,9 +32,13 @@ def exe(Payload_Script):
     'Z': Keycode.Z, 'F1': Keycode.F1, 'F2': Keycode.F2, 'F3': Keycode.F3,
     'F4': Keycode.F4, 'F5': Keycode.F5, 'F6': Keycode.F6, 'F7': Keycode.F7,
     'F8': Keycode.F8, 'F9': Keycode.F9, 'F10': Keycode.F10, 'F11': Keycode.F11,
-    'F12': Keycode.F12,
-    }
+    'F12': Keycode.F12, "İ": Keycode.I, ".": "/", 'ş': 's',
+    'Ş': 'S', 'ğ': 'g', 'Ğ': 'G', 'ç': 'c', 'Ç': 'C', 'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ü': 'u', 'Ü': 'U'
+}
 
+
+
+def exe(Payload_Script):
     def convertLine(line):
         newline = []
         print(line)
@@ -74,7 +84,7 @@ def exe(Payload_Script):
             runScriptLine(newScriptLine)
 
     kbd = Keyboard(usb_hid.devices)
-    layout = KeyboardLayoutUS(kbd)
+    layout = KeyboardLayout(kbd)
 
     # sleep at the start to allow the device to be recognized by the host computer
     time.sleep(.5)
