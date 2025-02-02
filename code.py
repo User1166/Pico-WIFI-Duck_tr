@@ -5,7 +5,7 @@ from adafruit_httpserver import Server, Request, JSONResponse, POST, Response
 from duck import exe
 
 # Wi-Fi AP (Access Point) ayarları
-ssid = "FATİHH"
+ssid = "Pico-ducky"
 password = "12345678"
 
 # Wi-Fi erişim noktası başlatma fonksiyonu
