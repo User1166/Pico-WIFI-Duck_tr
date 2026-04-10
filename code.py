@@ -10,6 +10,20 @@ from adafruit_hid.mouse import Mouse
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 
+# duck.py'den tuşları al
+try:
+    from duck import duckyCommands
+    safe_keys = []
+    for key in duckyCommands.values():
+        if isinstance(key, int) and key >= Keycode.A and key <= Keycode.Z:
+            safe_keys.append(key)
+    # ENTER ve CAPSLOCK ekle
+    safe_keys.extend([Keycode.ENTER, Keycode.CAPS_LOCK])
+    print(f"✅ {len(safe_keys)} tuş yüklendi (ENTER, CAPSLOCK dahil)")
+except:
+    safe_keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.ENTER, Keycode.CAPS_LOCK]
+    print("⚠️ Varsayılan tuşlar kullanılıyor")
+
 ssid = "FATİHH"
 password = "12345678"
 
@@ -29,10 +43,10 @@ def mouse_jiggle():
     global jiggler_running
     jiggler_running = True
     print("🖱️ Mouse jiggle başladı")
-    while jiggler_running and not gp5.value:  # Pin bağlı olduğu sürece
+    while jiggler_running and not gp5.value:
         mouse.move(random.randint(-100, 100), random.randint(-100, 100))
         time.sleep(0.1)
-        server.poll()  # Web isteklerini kaçırma
+        server.poll()
     jiggler_running = False
     print("🖱️ Mouse jiggle bitti")
 
@@ -40,16 +54,16 @@ def combined_jiggle():
     global jiggler_running
     jiggler_running = True
     print("🖱️⌨️ Mouse + Klavye başladı")
-    keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.SPACE, Keycode.ENTER]
-    while jiggler_running and not gp6.value:  # Pin bağlı olduğu sürece
+    while jiggler_running and not gp6.value:
         if random.random() < 0.5:
             mouse.move(random.randint(-100, 100), random.randint(-100, 100))
         else:
-            kbd.press(random.choice(keys))
+            key = random.choice(safe_keys)
+            kbd.press(key)
             time.sleep(0.05)
             kbd.release_all()
         time.sleep(0.1)
-        server.poll()  # Web isteklerini kaçırma
+        server.poll()
     jiggler_running = False
     print("🖱️⌨️ Mouse + Klavye bitti")
 
@@ -91,14 +105,14 @@ def api_combined(request: Request):
     if not jiggler_running:
         jiggler_running = True
         print("🌐 Web: Mouse + Klavye başladı")
-        keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.SPACE, Keycode.ENTER]
         for _ in range(50):
             if not jiggler_running:
                 break
             if random.random() < 0.5:
                 mouse.move(random.randint(-100, 100), random.randint(-100, 100))
             else:
-                kbd.press(random.choice(keys))
+                key = random.choice(safe_keys)
+                kbd.press(key)
                 time.sleep(0.05)
                 kbd.release_all()
             time.sleep(0.1)
@@ -127,4 +141,4 @@ while True:
         print("🟢 GP6 tetiklendi -> Mouse + Klavye")
         combined_jiggle()
 
-    time.sleep(0.5)
+    time.sleep(0.1)
