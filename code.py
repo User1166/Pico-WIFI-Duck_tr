@@ -1,77 +1,130 @@
 import wifi
 import socketpool
 import time
+import random
+import digitalio
+import board
+import usb_hid
 from adafruit_httpserver import Server, Request, JSONResponse, POST, Response
-from duck import exe
+from adafruit_hid.mouse import Mouse
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keycode import Keycode
 
-# Wi-Fi AP (Access Point) ayarları
-ssid = "Pico-ducky"
+ssid = "FATİHH"
 password = "12345678"
 
-# Wi-Fi erişim noktası başlatma fonksiyonu
-def start_access_point():
-    try:
-        print("Wi-Fi kapatılıyor...")
-        wifi.radio.stop_station()  # Önce kapat
-        time.sleep(2)  # Bekleme süresi ekle
-        print(f"Wi-Fi erişim noktası başlatılıyor: {ssid}")
-        wifi.radio.start_ap(ssid, password)
-        time.sleep(1)  # IP atanmasını bekle
-        print("Wi-Fi erişim noktası oluşturuldu!")
-        print("IP Adresi:", wifi.radio.ipv4_address)
-    except Exception as e:
-        print(f"Hata: {e}. Wi-Fi erişim noktası oluşturulamadı.")
+# Pinler
+gp5 = digitalio.DigitalInOut(board.GP5)
+gp6 = digitalio.DigitalInOut(board.GP6)
+gp5.pull = digitalio.Pull.UP
+gp6.pull = digitalio.Pull.UP
 
-# Server ve socketpool ayarları
+# HID
+mouse = Mouse(usb_hid.devices)
+kbd = Keyboard(usb_hid.devices)
+
+jiggler_running = False
+
+def mouse_jiggle():
+    global jiggler_running
+    jiggler_running = True
+    print("🖱️ Mouse jiggle başladı")
+    while jiggler_running and not gp5.value:  # Pin bağlı olduğu sürece
+        mouse.move(random.randint(-100, 100), random.randint(-100, 100))
+        time.sleep(0.1)
+        server.poll()  # Web isteklerini kaçırma
+    jiggler_running = False
+    print("🖱️ Mouse jiggle bitti")
+
+def combined_jiggle():
+    global jiggler_running
+    jiggler_running = True
+    print("🖱️⌨️ Mouse + Klavye başladı")
+    keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.SPACE, Keycode.ENTER]
+    while jiggler_running and not gp6.value:  # Pin bağlı olduğu sürece
+        if random.random() < 0.5:
+            mouse.move(random.randint(-100, 100), random.randint(-100, 100))
+        else:
+            kbd.press(random.choice(keys))
+            time.sleep(0.05)
+            kbd.release_all()
+        time.sleep(0.1)
+        server.poll()  # Web isteklerini kaçırma
+    jiggler_running = False
+    print("🖱️⌨️ Mouse + Klavye bitti")
+
+# WiFi AP
+wifi.radio.start_ap(ssid, password)
+print(f"📡 WiFi: {ssid} | IP: {wifi.radio.ipv4_address}")
+
+# Server
 pool = socketpool.SocketPool(wifi.radio)
-server = Server(pool, "/static", debug=True)
+server = Server(pool, debug=False)
 
-# Ana sayfa (HTML döndürme)
 @server.route("/")
 def base(request: Request):
-    try:
-        with open("index.html", "r") as file:
-            html_content = file.read()
-        headers = {"Content-Type": "text/html"}
-        return Response(request, html_content, headers=headers)
-    except Exception as e:
-        print(f"Error loading index.html: {e}")
-        return Response(request, "Error loading page", status=500)
+    with open("index.html", "r") as f:
+        return Response(request, f.read(), headers={"Content-Type": "text/html"})
 
-# API endpoint (POST isteği işleme)
-@server.route("/api", POST, append_slash=True)
+@server.route("/api", POST)
 def api(request: Request):
-    try:
-        if request.method == POST:
-            req = request.json()
-            payload = req["content"]
-            payload = payload.splitlines()  # Her satırı ayır
-            exe(payload)  # Payload'u çalıştır
-            return JSONResponse(request, {"message": "Done"})
-    except Exception as e:
-        print(f"Error processing API request: {e}")
-        return JSONResponse(request, {"error": "Failed to process request"}, status=500)
+    return JSONResponse(request, {"message": "OK"})
 
-# Server'ı başlat
-def start_server():
-    try:
-        print("Starting server on 192.168.4.1:80")
-        server.serve_forever('192.168.4.1', 80)  # IP ve port
-    except Exception as e:
-        print(f"Error starting server: {e}")
+@server.route("/jiggle/mouse", POST)
+def api_mouse(request: Request):
+    global jiggler_running
+    if not jiggler_running:
+        jiggler_running = True
+        print("🌐 Web: Mouse jiggle başladı")
+        for _ in range(50):
+            if not jiggler_running:
+                break
+            mouse.move(random.randint(-100, 100), random.randint(-100, 100))
+            time.sleep(0.1)
+        jiggler_running = False
+        print("🌐 Web: Mouse jiggle bitti")
+    return JSONResponse(request, {"status": "ok"})
 
-# Ana fonksiyon
-def main():
-    # Wi-Fi erişim noktasını başlat
-    start_access_point()
+@server.route("/jiggle/combined", POST)
+def api_combined(request: Request):
+    global jiggler_running
+    if not jiggler_running:
+        jiggler_running = True
+        print("🌐 Web: Mouse + Klavye başladı")
+        keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.SPACE, Keycode.ENTER]
+        for _ in range(50):
+            if not jiggler_running:
+                break
+            if random.random() < 0.5:
+                mouse.move(random.randint(-100, 100), random.randint(-100, 100))
+            else:
+                kbd.press(random.choice(keys))
+                time.sleep(0.05)
+                kbd.release_all()
+            time.sleep(0.1)
+        jiggler_running = False
+        print("🌐 Web: Mouse + Klavye bitti")
+    return JSONResponse(request, {"status": "ok"})
 
-    # Eğer IP alınmamışsa hata mesajı göster
-    if wifi.radio.ipv4_address is None:
-        print("⚠️  HATA: Wi-Fi erişim noktası oluşmadı!")
-    
-    # Server'ı başlat
-    start_server()
+@server.route("/jiggle/stop", POST)
+def api_stop(request: Request):
+    global jiggler_running
+    jiggler_running = False
+    print("⏹️ Jiggler durduruldu")
+    return JSONResponse(request, {"status": "stopped"})
 
-# Başlatma
-if __name__ == "__main__":
-    main()
+# Ana döngü
+print("🔍 Pin kontrolü başladı")
+server.start('192.168.4.1', 80)
+
+while True:
+    server.poll()
+
+    if not gp5.value and not jiggler_running:
+        print("🔵 GP5 tetiklendi -> Mouse")
+        mouse_jiggle()
+    elif not gp6.value and not jiggler_running:
+        print("🟢 GP6 tetiklendi -> Mouse + Klavye")
+        combined_jiggle()
+
+    time.sleep(0.5)
