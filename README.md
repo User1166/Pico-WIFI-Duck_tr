@@ -119,4 +119,12 @@ Edit the loadScript() function in index.html to include your own payload templat
 
 ⚠️ Disclaimer
 This project is intended for educational purposes and authorized security testing only.
-Misuse of
+Misuse of this tool on systems you do not own or have explicit permission to test is illegal and strictly discouraged. The author assumes no responsibility for any unauthorized or malicious use.
+
+🤝 Credits
+Turkish keyboard layout support based on Narsty's keycode_win_tr
+
+Inspired by the classic WiFi Duck projects and Pico-Ducky.(https://github.com/majdsassi/Pico-WIFI-Duck)
+
+
+
