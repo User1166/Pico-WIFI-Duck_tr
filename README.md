@@ -79,6 +79,7 @@ The UI is divided into three panels:
 |-----|--------|
 | **GP5 → GND** | Mouse jiggler runs while connected |
 | **GP6 → GND** | Mouse + Keyboard jiggler runs while connected |
+| **GP1 → GP3** |Enable mass storage to edit files |
 
 > 💡 Use a jumper wire or a button to easily trigger these actions.
 
